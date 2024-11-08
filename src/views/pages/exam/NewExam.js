@@ -7,18 +7,13 @@ import useCustomContext from '../../../hooks/useCustomContext'
 import axios from '../../../api/axios'
 import Swal from 'sweetalert2'
 import { DatePicker, Modal, Select, TimePicker } from 'antd'
+import dayjs from 'dayjs'
 
 export default function NewExam(){
 
     const {
         getSubjects,
         subjects,
-        getCourseUnits,
-        getAcademicYears,
-        courseUnits,
-        academicYears,
-        getProfessors,
-        professors,
         getExams
     } = useCustomContext()
 
@@ -32,15 +27,9 @@ export default function NewExam(){
     }
 
     useEffect(() => {
-        getAcademicYears()
         getCurrentYear()
-        getProfessors()
         getSubjects()
     }, [])
-
-    // const semesters = currentY?.Periodes?.reduce(( accumulateur, periode ) => {
-    //     return accumulateur.concat(periode?.Semesters)
-    // }, [])
 
     const [ exam, setExam ] = useState({
         examDate: '',
@@ -82,7 +71,7 @@ export default function NewExam(){
         .then( response => {
 
             getSubjects()
-            getCourseUnits()
+            ()
             closeModal()
             getExams()
 
@@ -134,7 +123,9 @@ export default function NewExam(){
                 placeholder = "Matière"
                 onChange = { value => setExam({ ...exam, subjectId: value })}
                 options = {
-                    subjects.map( subject => ({
+                    subjects
+                    .filter( subject => subject?.Semester?.Periode?.AcademicYearId == currentY?.AcademicYearId)
+                    .map( subject => ({
                         label: subject.subjectName,
                         value: subject.subjectId
                     }))
@@ -181,6 +172,7 @@ export default function NewExam(){
                 }}
                 placeholder='Date'
                 onChange = { value => setExam({ ...exam, examDate: value }) }
+                minDate = { dayjs().add(2, 'day')}
             />
 
             <CFormLabel aria-required className='text-secondary'> Heure début </CFormLabel>

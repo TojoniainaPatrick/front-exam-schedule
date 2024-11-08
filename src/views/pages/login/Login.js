@@ -46,7 +46,7 @@ const Login = () => {
     else{
       await axios.post('/user/authenticate', user)
       .then( response => {
-        navigate('/app/dashboard')
+        navigate('/app/exam')
 
         let userFullData = response?.data?.data
         let userDataWithoutPass = Object.entries(userFullData).reduce((accumulateur, [key, value]) => {

@@ -8,7 +8,7 @@ import axios from '../../../api/axios'
 import Swal from 'sweetalert2'
 import { DatePicker, Modal} from 'antd'
 
-export default function NewPeriode(){
+export default function NewPeriode({ getCurrentYear }){
 
     const {
         getAcademicYears,
@@ -48,6 +48,7 @@ export default function NewPeriode(){
         .then( response => {
 
             getAcademicYears()
+            getCurrentYear()
 
             Toast.fire({
                 icon: "success",

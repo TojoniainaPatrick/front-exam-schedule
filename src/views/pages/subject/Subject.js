@@ -38,6 +38,8 @@ export default function Subject(){
 
     const [ currentCU, setCurrentCU ] = useState({})
     const [ visibleUpdate, setVisibleUpdate ] = useState( false )
+    const [ searchSubject, setSearchSubject ] = useState('')
+    const [ searchCU, setSearchCU ] = useState('')
 
     useEffect( () => {
         getCourseUnits()
@@ -92,6 +94,26 @@ export default function Subject(){
         setVisibleUpdate( true )
     }
 
+    const handleClickCU = cu => {
+
+        if( cu.courseUnitId == currentCU.courseUnitId ){ setCurrentCU( null )}
+
+        else {
+            setCurrentCU( cu )
+        }
+    }
+
+    const searchedCourseUnits = courseUnits.filter( cu => cu.courseUnitName?.toString().toLowerCase().includes(searchCU.toString().toLowerCase()))
+
+    const filteredSubjects = currentCU
+    ? subjects.filter( subject => subject.courseUnitId == currentCU.courseUnitId )
+    : subjects
+
+    const searchedSubjects = filteredSubjects.filter( subject =>
+        subject.subjectName?.toString().toLowerCase().includes( searchSubject.toString().toLowerCase()) ||
+        subject.studyTrack?.includes( searchSubject )
+    )
+
     return(
         <>
             <UpdateSubject visible = { visibleUpdate } setVisible = { setVisibleUpdate } />
@@ -109,7 +131,10 @@ export default function Subject(){
                                 <CRow className='d-flex justify-content-between align-items-center mb-3'>
 
                                     <CCol md = { 10 } className='text-start'>
-                                        <CFormInput placeholder='Recherche ...' />
+                                        <CFormInput
+                                            placeholder='Recherche ...'
+                                            onChange = { e => setSearchSubject( e.target.value ) }
+                                        />
                                     </CCol>
 
                                     <CCol md = { 2 } className='text-end'>
@@ -196,19 +221,22 @@ export default function Subject(){
 
                                 <CRow className='d-flex justify-content-center align-items-center mb-3'>
                                     <CCol md = { 8 } className='text-start'>
-                                        <CFormInput placeholder='Recherche ...' />
+                                        <CFormInput
+                                            placeholder = 'Recherche ...'
+                                            onChange = { e => setSearchCU( e.target.value ) }
+                                        />
                                     </CCol>
                                     <CCol md = { 2 } className='text-end'> <NewCourseUnit /> </CCol>
                                 </CRow>
 
                                 <CRow>
                                     {
-                                        courseUnits.map(( courseUnit, key ) =>
+                                        searchedCourseUnits.map(( courseUnit, key ) =>
                                             <CCol md = { 12 } key = { key } className='mb-3'>
                                                 <CCard style={{ cursor: 'pointer'}}>
                                                     <CCardBody>
                                                         <CRow className='d-flex flex-row align-items-center justify-content-between'>
-                                                            <CCol md = { 8 }> <span> { courseUnit?.courseUnitName } </span> </CCol>
+                                                            <CCol md = { 8 } onClick = { _ => handleClickCU( courseUnit )}> <span> { courseUnit?.courseUnitName } </span> </CCol>
                                                             <CCol md = { 4 } className='d-flex flex-row align-items-center justify-content-center'>
                                                                 <Button className='me-2' type='primary' icon = { <FaEdit />} />
                                                                 <Button type='primary' danger icon = { <MdDelete />} />

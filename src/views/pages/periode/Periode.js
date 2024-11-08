@@ -1,7 +1,9 @@
 import {
+    CBadge,
     CButton,
     CCard,
     CCardBody,
+    CCardFooter,
     CCardHeader,
     CCol,
     CContainer,
@@ -11,19 +13,32 @@ import {
 import useCustomContext from '../../../hooks/useCustomContext'
 import { useEffect, useState } from 'react'
 import NewPeriode from './NewPeriode'
+import dayjs from 'dayjs'
+import axios from '../../../api/axios'
 
 export default function Periode(){
 
     const {
         getAcademicYears,
-        academicYears
+        academicYears,
+        getExams,
+        exams
     } = useCustomContext()
 
     const [ currentYear, setCurrentYear ] = useState( null )
     const [ currentSemester, setCurrentSemester ] = useState( null )
+    const [ search, setSearch ] = useState('')
+
+    const getCurrentYear = async _ => {
+        await axios('year/current')
+        .then( res => setCurrentYear(res.data.data))
+        .catch( error => console.log( error))
+    }
 
     useEffect( () => {
         getAcademicYears()
+        getCurrentYear()
+        getExams()
     }, [])
 
     const clickYear = year => {
@@ -39,6 +54,16 @@ export default function Periode(){
         else setCurrentSemester( semester )
     }
 
+    const filteredExams = currentSemester
+    ? exams.filter( exam => exam.Subject?.Semester?.semesterId == currentSemester?.semesterId )
+    : exams
+
+    const searchedExams = filteredExams.filter( exam =>
+        exam.Subject?.subjectName?.toString().toLowerCase().includes(search.toString().toLowerCase()) ||
+        exam.examType.toString().toLowerCase().includes(search.toString().toLowerCase()) ||
+        exam.examSession.toString().toLowerCase().includes(search.toString().toLowerCase())
+    )
+
     return(
         <CContainer>
             <CRow className='d-flex justify-content-between'>
@@ -51,13 +76,6 @@ export default function Periode(){
                                 <CCardHeader> Semestre </CCardHeader>
 
                                 <CCardBody>
-
-                                    <CRow className='d-flex justify-content-between align-items-center'>
-                                        <CCol md = { 12 } className='text-start'>
-                                            <CFormInput placeholder='Recherche ...' />
-                                        </CCol>
-                                    </CRow>
-
                                     {
                                         currentYear &&
                                         <>
@@ -97,6 +115,109 @@ export default function Periode(){
                         <CCol md = { 12 }>
                             <CCard>
                                 <CCardHeader> Liste des examens </CCardHeader>
+
+                                <CCardBody>
+                                    <CRow className='d-flex justify-content-between align-items-center my-3'>
+                                        <CCol md = { 12 } className='text-start'>
+                                            <CFormInput
+                                                placeholder='Recherche ...'
+                                                onChange = { e => setSearch( e.target.value ) }
+                                            />
+                                        </CCol>
+                                    </CRow>
+                                    <CRow>
+                                        {
+                                            searchedExams.map(( exam, key ) =>
+                                                <CCol key = { key } md = { 4 }>
+                                                    <CCard>
+
+                                                        <CCardHeader className='d-flex align-items-center justify-content-between'>
+                                                            { exam?.Subject?.subjectName }
+                                                        </CCardHeader>
+
+                                                        <CCardBody>
+
+                                                            <CRow>
+                                                                <CCol md = { 6 } className='text-center my-1 p-0'>
+                                                                    <span> De   <CBadge color='primary'> { exam.examStartTime } </CBadge> </span>
+                                                                </CCol>
+
+                                                                <CCol md = { 5 } className='text-center my-1 p-0'>
+                                                                    <span> à   <CBadge color='success'> { exam.examFinishTime } </CBadge> </span>
+                                                                </CCol>
+
+                                                                <CCol md = { 6 } className='text-center my-1 p-0'>
+                                                                    <CBadge color='secondary'> { exam.examType } </CBadge>
+                                                                </CCol>
+
+                                                                <CCol md = { 5 } className='text-center my-1 p-0' >
+                                                                    <CBadge color = { exam.examSession?.toString().toLowerCase() == 'normale' ? 'primary' : 'danger' }> Session { exam.examSession } </CBadge>
+                                                                </CCol>
+
+                                                                <CCol md = { 12 } className='text-center my-3 p-0' >
+                                                                    {
+                                                                        exam.paperCollectionDate &&
+                                                                        <>
+                                                                            <span> Récupération des feuilles de copie &nbsp;</span>
+                                                                            <CBadge color = 'secondary'>
+                                                                                {
+                                                                                    new Intl.DateTimeFormat( 'fr-FR', { dateStyle: 'long' })
+                                                                                    .format(new Date(dayjs(exam.paperCollectionDate).format('YYYY-MM-DD')))
+                                                                                }
+                                                                            </CBadge>
+                                                                        </>
+                                                                    }
+                                                                </CCol>
+
+                                                                <CCol md = { 12 } className='text-center my-3 p-0' >
+                                                                    {
+                                                                        exam.paperReturnDate &&
+                                                                        <>
+                                                                            <span> Remise des feuilles de copie &nbsp;</span>
+                                                                            <CBadge color = 'secondary'>
+                                                                                {
+                                                                                    new Intl.DateTimeFormat( 'fr-FR', { dateStyle: 'long' })
+                                                                                    .format(new Date(dayjs(exam.paperReturnDate).format('YYYY-MM-DD')))
+                                                                                }
+                                                                            </CBadge>
+                                                                        </>
+                                                                    }
+                                                                </CCol>
+
+                                                                {
+                                                                    exam.publishingDate &&
+                                                                    <CCol md = { 12 } className='text-center my-1 p-0' >
+                                                                        <CBadge color = 'primary' className='me-3'> Affiché </CBadge>
+                                                                        <CBadge color = 'secondary'>
+                                                                            {
+                                                                                new Intl.DateTimeFormat( 'fr-FR', { dateStyle: 'long' })
+                                                                                .format(new Date(dayjs(exam.publishingDate).format('YYYY-MM-DD')))
+                                                                            }
+                                                                        </CBadge>
+                                                                    </CCol>
+                                                                }
+
+                                                                {
+                                                                    exam.unSealed != null &&
+                                                                    <CCol md = { 12 } className='text-center my-1 p-0' >
+                                                                        <CBadge color = { exam.unSealed ? "success" : "danger"}>
+                                                                            { exam.unSealed == false  ? "Non dépouillée" : "dépouillée"}
+                                                                        </CBadge>
+                                                                    </CCol>
+                                                                }
+
+                                                            </CRow>
+                                                        </CCardBody>
+
+                                                        <CCardFooter>
+                                                            { new Intl.DateTimeFormat( 'fr-FR', { dateStyle: 'long' }).format(new Date(dayjs(exam.examDate).format("YYYY-MM-DD"))) }
+                                                        </CCardFooter>
+                                                    </CCard>
+                                                </CCol>
+                                            )
+                                        }
+                                    </CRow>
+                                </CCardBody>
                             </CCard>
                         </CCol>
                     </CRow>
@@ -112,7 +233,7 @@ export default function Periode(){
                                     <CFormInput placeholder='Recherche ...' />
                                 </CCol>
                                 <CCol md = { 2 } className='text-end'>
-                                    <NewPeriode />
+                                    <NewPeriode getCurrentYear = { getCurrentYear} />
                                 </CCol>
                             </CRow>
                             <CRow>
